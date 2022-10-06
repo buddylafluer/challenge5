@@ -14,7 +14,7 @@ const months = ["January", "February", "March", "April", "May", "June",
                 "July", "August", "September", "October", "November", "December"];
 
 setCurrentDateAndHour();
-buildTimeBlocks(); 
+makeTimeBlocks(); 
 getTimeEntries(); 
 
 $(".saveBtn").click(saveClick); 
@@ -38,7 +38,7 @@ function setCurrentDateAndHour() {
     $("#currentDay").text(currentDateString); 
 }
 
-function buildTimeBlocks() {
+function makeTimeBlocks() {
     var containerDiv = $(".container"); 
 
     for (let hourBlock=firstEntry; hourBlock <= lastEntry; hourBlock++) {
@@ -67,3 +67,76 @@ function buildTimeBlocks() {
     }
 }
 
+function getTimeEntries() {
+    var teList = JSON.parse(localStorage.getItem(timeEntriesName));
+
+    if (teList) {
+        timeEntries = teList;
+    }
+
+    for (let i=0; i<timeEntries.length; i++) {
+        
+        if (timeEntries[i].day == currentDate) {
+            $("#text"+timeEntries[i].time).val(timeEntries[i].text); 
+        }
+    }
+}
+
+function saveClick() {
+    var hourBlock = $(this).val(); 
+    var entryFound = false;
+    var newEntryIndex = timeEntries.length; 
+    
+    var newEntry = {day: currentDate, time: hourBlock, text: $("#text"+hourBlock).val()}; 
+
+    function timeGreater(time1,time2) {
+        var num1 = parseInt(time1.substring(0, time1.length-2)); 
+        var num2 = parseInt(time2.substring(0, time2.length-2)); 
+        var per1 = time1.substr(-2,2); 
+        var per2 = time2.substr(-2,2); 
+
+        if (num1 === 12) {
+            num1 = 0;
+        }
+
+        if (num2 === 12) {
+            num2 = 0;
+        }
+
+        if (per1 < per2) {
+            return false;
+        }
+        else if (per1 > per2) {
+            return true; 
+        }
+        else {
+            return (num1 > num2);
+        }
+    }
+
+    for (let i=0; i<timeEntries.length; i++) {
+        if (timeEntries[i].day == currentDate) {
+            if (timeEntries[i].time == hourBlock) {
+                timeEntries[i].text = newEntry.text; 
+                entryFound = true; 
+                break;
+            }
+            
+            else if (timeGreater(timeEntries[i].time, hourBlock)) {
+                newEntryIndex = i;
+                break;
+            }
+        }
+       
+        else if (timeEntries[i].day > currentDate) {
+            newEntryIndex = i;
+            break;
+        }
+    }
+
+    if (!entryFound) {
+        timeEntries.splice(newEntryIndex, 0, newEntry);
+    }
+
+    localStorage.setItem(timeEntriesName, JSON.stringify(timeEntries));
+}
